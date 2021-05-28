@@ -172,6 +172,7 @@ function handleMessage(sender_psid,message) {
       entityChosen=name
     }
   })
+ 
   if(entityChosen === ""){
     //default
     callSendAPI(sender_psid,`The bot is needed more training, try to say "thanks a lot" or "hi" to the bot` );
