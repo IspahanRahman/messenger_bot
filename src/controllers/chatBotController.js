@@ -162,33 +162,85 @@ function firstTrait(nlp, name) {
   return nlp && nlp.entities && nlp.traits[name] && nlp.traits[name][0];
 }
 
-function handleMessage(sender_psid,message) {
-  // check greeting is here and is confident
-  let entitiesArr=["greetings","thanks","bye"]
-  let entityChosen=""
-  entitiesArr.forEach((name)=>{
-    let entity =firstTrait(message.nlp,name)
-    if(entity && entity.confidence > 0.8){
-      entityChosen=name
-    }
-  })
- 
+function handleMessage(sender_psid, message) {
+  //handle message for react, like press like button
+  // id like button: sticker_id 369239263222822
+
+  if( message && message.attachments && message.attachments[0].payload){
+      callSendAPI(sender_psid, "Thank you for watching my video !!!");
+      callSendAPIWithTemplate(sender_psid);
+      return;
+  }
+
+  let entitiesArr = [ "greetings", "thanks", "bye" ];
+  let entityChosen = "";
+  entitiesArr.forEach((name) => {
+      let entity = firstTrait(message.nlp, name);
+      if (entity && entity.confidence > 0.8) {
+          entityChosen = name;
+      }
+  });
+
   if(entityChosen === ""){
-    //default
-    callSendAPI(sender_psid,`The bot is needed more training, try to say "thanks a lot" or "hi" to the bot` );
-}else{
-   if(entityChosen === "greetings"){
-       //send greetings message
-       callSendAPI(sender_psid,'Hi there! This bot is created by Ispahan Rahman.');
-   }
-   if(entityChosen === "thanks"){
-       //send thanks message
-       callSendAPI(sender_psid,`You 're welcome!`);
-   }
-    if(entityChosen === "bye"){
-        //send bye message
-        callSendAPI(sender_psid,'bye-bye!');
-    }
+      //default
+      callSendAPI(sender_psid,`The bot is needed more training, try to say "thanks a lot" or "hi" to the bot` );
+  }else{
+     if(entityChosen === "greetings"){
+         //send greetings message
+         callSendAPI(sender_psid,'Hi there! This bot is created by Ispahan Rahman.');
+     }
+     if(entityChosen === "thanks"){
+         //send thanks message
+         callSendAPI(sender_psid,`You 're welcome!`);
+     }
+      if(entityChosen === "bye"){
+          //send bye message
+          callSendAPI(sender_psid,'bye-bye!');
+      }
+  }
 }
-  
-}
+
+let callSendAPIWithTemplate = (sender_psid) => {
+  // document fb message template
+  // https://developers.facebook.com/docs/messenger-platform/send-messages/templates
+  let body = {
+      "recipient": {
+          "id": sender_psid
+      },
+      "message": {
+          "attachment": {
+              "type": "template",
+              "payload": {
+                  "template_type": "generic",
+                  "elements": [
+                      {
+                          "title": "Want to build sth awesome?",
+                          "image_url": "https://www.nexmo.com/wp-content/uploads/2018/10/build-bot-messages-api-768x384.png",
+                          "subtitle": "Watch more videos on my youtube channel ^^",
+                          "buttons": [
+                              {
+                                  "type": "web_url",
+                                  "url": "https://bit.ly/subscribe-haryphamdev",
+                                  "title": "Watch now"
+                              }
+                          ]
+                      }
+                  ]
+              }
+          }
+      }
+  };
+
+  request({
+      "uri": "https://graph.facebook.com/v6.0/me/messages",
+      "qs": { "access_token": process.env.FACEBOOK_PAGE_TOKEN },
+      "method": "POST",
+      "json": body
+  }, (err, res, body) => {
+      if (!err) {
+          // console.log('message sent!')
+      } else {
+          console.error("Unable to send message:" + err);
+      }
+  });
+};
